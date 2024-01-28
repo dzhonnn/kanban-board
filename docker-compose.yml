@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+  backend:
+    build: ./services/backend
+    ports:
+      - 5000:5000
+    environment:
+      - DATABASE_URL=postgres://hello_fastapi:hello_fastapi@postgres:5432/hello_fastapi_dev
+      - SECRET_KEY=364a4ef4e909d20b155d1f980aeebe2dc23140f0bb370aee3682e69b085f3ef0
+      - SENDER_GMAIL=fastapikanbanboardtest@gmail.com
+      - SENDER_GMAIL_PASSWORD=wanevkuhmkudjnid
+    volumes:
+      - ./services/backend:/app
+    command: uvicorn src.main:app --reload --host 0.0.0.0 --port 5000
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  frontend:
+    build: ./services/frontend
+    volumes:
+      - './services/frontend:/app'
+      - '/app/node_modules'
+    ports:
+      - 8080:8080
+ 
+  postgres:
+    image: postgres:16.1
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_USER=hello_fastapi
+      - POSTGRES_PASSWORD=hello_fastapi
+      - POSTGRES_DB=hello_fastapi_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+  
+  rabbitmq:
+    image: rabbitmq:3.12.12-management
+    hostname: rabbitmq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=rmuser
+      - RABBITMQ_DEFAULT_PASS=rmpassword
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
+    volumes:
+      - ./services/rabbitmq:/var/lib/rabbitmq
+    ports:
+      - 15672:15672
+
+volumes:
+  postgres_data:
+
