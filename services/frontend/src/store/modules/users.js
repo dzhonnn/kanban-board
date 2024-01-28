@@ -10,15 +10,15 @@ const getters = {
 }
 
 const actions = {
-  async register({ dispatch }, form) {
+  // eslint-disable-next-line no-empty-pattern
+  async register({}, form) {
     await axios.post('register', form)
-    let UserForm = new FormData()
-    UserForm.append('username', form.username)
-    UserForm.append('email', form.email)
-    UserForm.append('password', form.password)
-    await dispatch('logIn', UserForm)
+    // await dispatch('logIn', userForm)
   },
   async logIn({ dispatch }, form) {
+    console.log(form)
+    console.log(form.email)
+    console.log(form.password)
     const email = form.email
     const password = form.password
     await axios.post(`login?email=${email}&password=${password}`)

@@ -21,8 +21,6 @@ const actions = {
   },
   // eslint-disable-next-line no-empty-pattern
   async updateSection({}, section) {
-    console.log(section.id)
-    console.log(section.form)
     await axios.patch(`sections/${section.id}`, section.form)
   },
   // eslint-disable-next-line no-empty-pattern

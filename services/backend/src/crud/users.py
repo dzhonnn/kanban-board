@@ -13,7 +13,7 @@ async def create_user(user) -> UserOutSchema:
     user.password = pwd_context.encrypt(user.password)
 
     try:
-        user_obj = await Users.create(**user.dict(exclude_unset=True))
+        user_obj = await Users.create(**user.dict())
     except IntegrityError:
         raise HTTPException(
             status_code=401, detail=f"Sorry, that username or email already exists")

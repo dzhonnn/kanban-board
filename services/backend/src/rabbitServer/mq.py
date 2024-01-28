@@ -38,10 +38,6 @@ class RMQ:
         )
         await self.channel.default_exchange.publish(message, "export")
 
-    async def recieve_message(msg):
-        async with msg.process():
-            await make_xml(json.loads(json.loads(msg.body)))
-
 
 async def make_connection(loop):
     global connection

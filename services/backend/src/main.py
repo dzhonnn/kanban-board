@@ -1,4 +1,3 @@
-from src.routes import notes, sections, users
 import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +9,7 @@ from src.rabbitServer.mq import mq, make_connection
 
 Tortoise.init_models(["src.database.models"], "models")
 
+from src.routes import notes, sections, users
 
 app = FastAPI()
 
@@ -34,7 +34,7 @@ async def start_message_consuming():
     loop = asyncio.get_event_loop()
     channel = await make_connection(loop)
     mq.channel = channel
-    asyncio.ensure_future(mq.make_queue(mq.recieve_message))
+    asyncio.ensure_future(mq.make_queue(users.recieve_message))
 
 
 @app.get("/")

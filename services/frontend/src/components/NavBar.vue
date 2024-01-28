@@ -44,9 +44,6 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
     name: "NavBar",
-    created: function() {
-        this.isLoggedIn = this.$store.getters.isAuthenticated
-    },
     computed: {
         isLoggedIn: function () {
             return this.$store.getters.isAuthenticated

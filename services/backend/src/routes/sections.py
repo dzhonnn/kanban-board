@@ -14,13 +14,13 @@ router = APIRouter()
 
 
 @router.get(
-    "/sections",
-    response_model=List[SectionOutSchema],
+    "/sections{section_id}",
+    response_model=SectionOutSchema,
     dependencies=[Depends(get_current_user)],
     tags=["Sections"]
 )
-async def get_sections(user: UserOutSchema = Depends(get_current_user)):
-    return await crud.get_sections(user)
+async def get_section(section_id, user: UserOutSchema = Depends(get_current_user)):
+    return await crud.get_section(section_id, user)
 
 
 @router.post(

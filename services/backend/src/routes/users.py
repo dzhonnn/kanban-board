@@ -21,6 +21,7 @@ from src.database.models import Users
 from src.schemas.token import Status
 from src.schemas.users import UserInSchema, UserOutSchema
 from src.rabbitServer.mq import mq
+from src.xml.xmlmaker import make_xml
 
 from src.auth.jwthandler import (
     create_access_token,
@@ -135,13 +136,18 @@ async def send_exported_board(current_user: UserOutSchema = Depends(get_current_
         return Status(message=e)
 
 
+async def recieve_message(msg):
+    async with msg.process():
+        await make_xml(json.loads(json.loads(msg.body)))
+
+
 @router.get(
     "/user/export_get",
     response_class=FileResponse,
     dependencies=[Depends(get_current_user)],
     tags=["Export"]
 )
-async def get_exported_board(current_user: UserOutSchema = Depends(get_current_user)):
+async def get_exported_board():
     return FileResponse(path=f"board.xml", filename=f"board.xml")
 
 

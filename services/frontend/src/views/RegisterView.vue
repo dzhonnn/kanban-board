@@ -35,10 +35,15 @@ export default defineComponent({
     },
     methods: {
         ...mapActions(["register"]),
+        ...mapActions(["logIn"]),
         async submit() {
             try {
                 await this.register(this.user)
-                this.$router.push("/dashboard")
+                let userForm = new FormData()
+                userForm.append("email", this.email)
+                userForm.append("password", this.password)
+                await this.logIn(this.user)
+                this.$router.push("/board")
             } catch (error) {
                 throw "Username already exists. " + error
             }

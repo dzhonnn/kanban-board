@@ -7,7 +7,7 @@
             <form @submit.prevent="submitSection">
                 <div class="mb-3">
                     <label for="title" class="form-label">Title:</label>
-                    <input type="text" name="title" v-model="sectionForm.title" class="form-control" />
+                    <input type="text" name="title" v-model="sectionForm.title" class="form-control" required/>
                 </div>
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>
@@ -84,7 +84,7 @@
                                                 <label for="comments" class="form-label">Comments: </label>
                                                 <input type="textarea" name="comments" class="form-control" v-model="noteUpdForm.comments">
                                                 <label for="deadline" class="form-label">Deadline: </label>
-                                                <input required type="date" name="deadline" class="form-control" v-model="noteUpdForm.deadline">
+                                                <input type="date" name="deadline" class="form-control" v-model="noteUpdForm.deadline" required>
                                             </div>
                                             <button type="submit" class="btn btn-primary">Submit</button>
                                         </form>
