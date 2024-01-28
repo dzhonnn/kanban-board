@@ -6,13 +6,8 @@ from src.schemas.token import Status
 from src.schemas.section import SectionOutSchema
 
 
-async def get_section(section_id, current_user):
-    section = await SectionOutSchema.from_queryset_single(Sections.get(id=section_id))
-    if section.author.id == current_user.id:
-        return section
-    else:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
+async def get_sections(current_user):
+    return await SectionOutSchema.from_queryset(Sections.filter(author_id=current_user.id))
 
 async def create_section(section, current_user) -> SectionOutSchema:
     section_dict = section.dict(exclude_unset=True)
