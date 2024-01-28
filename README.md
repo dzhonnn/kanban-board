@@ -22,9 +22,9 @@
 Для запуска необходимо выполнить команду:
 
 ```
-docker-compose up -d --build
+$ docker-compose up -d --build
 ```
 И затем применить миграции командой:
 ```
-docker-compose exec backend aerich upgrade
+$ docker-compose exec backend aerich upgrade
 ```
