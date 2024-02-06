@@ -1,55 +1,45 @@
-import json
 from datetime import timedelta
-from typing import List
-from dict2xml import dict2xml
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.templating import Jinja2Templates
 
 from tortoise.contrib.fastapi import HTTPNotFoundError
 from tortoise.exceptions import DoesNotExist
 
-from pathlib import Path
-
-import src.crud.users as crud
-from src.auth.users import validate_user
+import src.services.users as user_service
+from src.settings import get_settings, create_mq
 from src.email_notifications.email_notify import send_reset_password_mail
-from src.database.models import Users
 from src.schemas.token import Status
 from src.schemas.users import UserInSchema, UserOutSchema
-from src.rabbitServer.mq import mq
-from src.xml.xmlmaker import make_xml
+from src.rabbitServer.mq import send
 
 from src.auth.jwthandler import (
     create_access_token,
     get_current_user,
     decode_data,
-    ACCESS_TOKEN_EXPIRE_MINUTES
 )
-
-parent_directory = Path(__file__).parent
-templates_path = parent_directory.parent / "email_templates"
-templates = Jinja2Templates(directory=templates_path)
 
 router = APIRouter()
 
 
-@router.post("/register", tags=["Auth"], response_model=UserOutSchema)
+@router.post("/register", tags=["Auth"], response_model=UserOutSchema | Status)
 async def create_user(user: UserInSchema) -> UserOutSchema:
-    return await crud.create_user(user)
+    try:
+        return await user_service.create_user_service(user)
+    except Exception as e:
+        return Status(message=f"{e}")
 
 
 @router.post("/login", tags=["Auth"])
 async def login(email: str, password: str):
-    user_obj = await UserOutSchema.from_queryset_single(
-        Users.get(email=email))
+    settings = get_settings()
+    user_obj = await user_service.get_unauthorized_user_service(email=email)
     user_dict = user_obj.dict()
     username = user_dict["username"]
     user = OAuth2PasswordRequestForm(username=username, password=password)
-    user = await validate_user(user)
+    user = await user_service.validate_user_service(user)
 
     if not user:
         raise HTTPException(
@@ -58,7 +48,8 @@ async def login(email: str, password: str):
             headers={"WWW-Authenticate": "Bearer"}
         )
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
@@ -79,12 +70,13 @@ async def login(email: str, password: str):
 
 
 @router.post("/forgot_password", tags=["Reset password"])
-async def forgot_password(request: Request, email: str):
+async def forgot_password(email: str):
+    settings = get_settings()
     try:
-        db_user = Users.get(email=email)
+        db_user = await user_service.get_unauthorized_user_service(email=email)
         if db_user:
             access_token_expires = timedelta(
-                minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+                minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(
                 data={"sub": email}, expires_delta=access_token_expires)
             url = f"http://localhost:8080/resetpassword?access_token={access_token}"
@@ -94,11 +86,12 @@ async def forgot_password(request: Request, email: str):
             status_code=404, detail=f"User with email: {email} not found")
 
 
-@router.get("/reset_password_template", tags=["Reset password"])
+@router.get("/reset_password_template", include_in_schema=False)
 async def reset_password_template(request: Request):
+    settings = get_settings()
     try:
         token = request.query_params.get("access_token")
-        return templates.TemplateResponse(
+        return settings.templates.TemplateResponse(
             "reset_password.html",
             {
                 "request": request,
@@ -109,7 +102,7 @@ async def reset_password_template(request: Request):
         Status(message=f"Need access token to reset password.\{e}")
 
 
-@router.post("/reset_password", tags=["Reset password"])
+@router.post("/reset_password", include_in_schema=False)
 async def reset_password(request: Request, new_password: str = Form(...)):
     try:
         token = request.query_params.get("access_token")
@@ -117,7 +110,7 @@ async def reset_password(request: Request, new_password: str = Form(...)):
             return Status("Need token to reset password.")
         payload = await decode_data(token)
         email = payload.get("sub")
-        await crud.reset_password(email, new_password)
+        await user_service.reset_password_service(email, new_password)
         return Status(message="Password changed")
     except Exception as e:
         return Status(message=f"Something went wrong.\{e}")
@@ -129,16 +122,12 @@ async def reset_password(request: Request, new_password: str = Form(...)):
     tags=["Export"]
 )
 async def send_exported_board(current_user: UserOutSchema = Depends(get_current_user)):
+    channel = await create_mq()
     try:
-        await mq.send(current_user.json())
+        await send(channel, current_user.json())
         return Status(message="File sended.")
     except Exception as e:
-        return Status(message=e)
-
-
-async def recieve_message(msg):
-    async with msg.process():
-        await make_xml(json.loads(json.loads(msg.body)))
+        return Status(message=f"{e}")
 
 
 @router.get(
@@ -147,8 +136,8 @@ async def recieve_message(msg):
     dependencies=[Depends(get_current_user)],
     tags=["Export"]
 )
-async def get_exported_board():
-    return FileResponse(path=f"board.xml", filename=f"board.xml")
+async def get_exported_board(current_user: UserOutSchema = Depends(get_current_user)):
+    return FileResponse(path=f"board{current_user.id}.xml", filename=f"board{current_user.id}.xml")
 
 
 @router.get(
@@ -169,4 +158,4 @@ async def read_users_me(current_user: UserOutSchema = Depends(get_current_user))
     tags=["Users"]
 )
 async def delete_user(user_id: int, current_user: UserOutSchema = Depends(get_current_user)) -> Status:
-    return await crud.delete_user(user_id, current_user)
+    return await user_service.delete_user_service(user_id, current_user)

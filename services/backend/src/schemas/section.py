@@ -8,7 +8,7 @@ SectionInSchema = pydantic_model_creator(
 )
 
 SectionOutSchema = pydantic_model_creator(
-    Sections, name="Section", exclude=["author.password", "author.email"]
+    Sections, name="Section", exclude=["author"]
 )
 
 

@@ -75,7 +75,7 @@
                                                 <label for="title" class="form-label">Title: </label>
                                                 <input required type="text" name="title" class="form-control" v-model="noteUpdForm.title">
                                                 <label for="status" class="form-label">Status: </label>
-                                                <select required name="status" class="form-control" v-model="noteUpdForm.status_id">
+                                                <select required name="status" class="form-control" v-model="noteUpdForm.section_id">
                                                     <option selected></option>
                                                     <option v-for="section in sections" :key="section.id" :value=section.id>{{ section.title }}</option>
                                                 </select>
@@ -139,14 +139,14 @@ export default defineComponent({
                 description: "",
                 comments: "",
                 deadline: Date(""),
-                status_id: 0
+                section_id: 0
             },
             noteUpdForm: {
                 title: this.title,
                 description: this.description,
                 comments: "",
                 deadline: Date(""),
-                status_id: 0
+                section_id: 0
             },
         }
     },
@@ -178,8 +178,8 @@ export default defineComponent({
             await this.deleteSection(section_id)
             return this.$store.dispatch("getSections")
         },
-        async submitNote(status_id) {
-            this.noteForm["status_id"] = status_id
+        async submitNote(section_id) {
+            this.noteForm["section_id"] = section_id
             await this.createNote(this.noteForm)
             return this.$store.dispatch("getSections")
         },

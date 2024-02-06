@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "notes" (
     "description" VARCHAR(225),
     "comments" TEXT,
     "deadline" DATE NOT NULL,
-    "status_id" INT NOT NULL REFERENCES "sections" ("id") ON DELETE CASCADE
+    "section_id" INT NOT NULL REFERENCES "sections" ("id") ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS "aerich" (
     "id" SERIAL NOT NULL PRIMARY KEY,

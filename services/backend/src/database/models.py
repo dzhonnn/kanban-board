@@ -24,8 +24,8 @@ class Notes(models.Model):
     description = fields.CharField(max_length=225, null=True)
     comments = fields.TextField(null=True)
     deadline = fields.DateField()
-    status = fields.ForeignKeyField(
+    section = fields.ForeignKeyField(
         "models.Sections", related_name="note")
 
     def __str__(self):
-        return f"{self.title}, {self.status_id} on {self.created_at}"
+        return f"{self.title}, {self.section_id} on {self.created_at}"

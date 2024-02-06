@@ -5,10 +5,10 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 from src.database.models import Notes
 
 NoteInSchema = pydantic_model_creator(
-    Notes, name="NoteIn", exclude_readonly=True
+    Notes, name="NoteIn", exclude=["section", "id"]
 )
 NoteOutSchema = pydantic_model_creator(
-    Notes, name="Note", exclude=["status.author.password", "status.author.email"]
+    Notes, name="Note", exclude=["section.author.password", "section.author.email"]
 )
 
 
@@ -17,4 +17,4 @@ class UpdateNote(BaseModel):
     description: str | None
     comments: str | None
     deadline: datetime | str
-    status_id: int | None
+    section_id: int | None

@@ -1,10 +1,9 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from tortoise.contrib.fastapi import HTTPNotFoundError
-from tortoise.exceptions import DoesNotExist
 
-import src.crud.sections as crud
+import src.services.sections as section_service
 from src.auth.jwthandler import get_current_user
 from src.schemas.section import SectionOutSchema, SectionInSchema, UpdateSection
 from src.schemas.token import Status
@@ -20,7 +19,7 @@ router = APIRouter()
     tags=["Sections"]
 )
 async def get_sections(user: UserOutSchema = Depends(get_current_user)):
-    return await crud.get_sections(user)
+    return await section_service.get_sections_service(user)
 
 
 @router.post(
@@ -33,7 +32,7 @@ async def create_section(
     section: SectionInSchema,
     current_user: UserOutSchema = Depends(get_current_user)
 ) -> SectionOutSchema:
-    return await crud.create_section(section, current_user)
+    return await section_service.create_section_service(section, current_user)
 
 
 @router.patch(
@@ -48,7 +47,7 @@ async def update_section(
     section: UpdateSection,
     user: UserOutSchema = Depends(get_current_user)
 ) -> SectionOutSchema:
-    return await crud.update_section(section_id, section, user)
+    return await section_service.update_section_service(section_id, section, user)
 
 
 @router.delete(
@@ -62,4 +61,7 @@ async def delete_section(
     section_id: int,
     current_user: UserOutSchema = Depends(get_current_user)
 ):
-    return await crud.delete_section(section_id, current_user)
+    try:
+        return await section_service.delete_section_service(section_id, current_user)
+    except Exception as e:
+        return Status(message=f"{e}")

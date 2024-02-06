@@ -4,9 +4,9 @@ from collections import OrderedDict
 
 
 async def make_xml(data: dict):
-    async with aiofiles.open("board.xml", "w") as f:
+    async with aiofiles.open(f"board{data['id']}.xml", "w") as f:
         await f.close()
-    async with aiofiles.open("board.xml", "a") as f:
+    async with aiofiles.open(f"board{data['id']}.xml", "a") as f:
         for section in data["section"]:
             section = OrderedDict(section)
             del section["id"]

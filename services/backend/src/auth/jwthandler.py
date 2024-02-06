@@ -1,4 +1,3 @@
-from os import environ
 from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException, Request
@@ -8,13 +7,10 @@ from fastapi.security.utils import get_authorization_scheme_param
 from jose import JWTError, jwt
 from tortoise.exceptions import DoesNotExist
 
+from src.settings import get_settings
 from src.schemas.token import TokenData
 from src.database.models import Users
 from src.schemas.users import UserOutSchema
-
-SECRET_KEY = environ.get("SECRET_KEY")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 class OAuth2PasswordBearerCookie(OAuth2):
@@ -47,10 +43,8 @@ class OAuth2PasswordBearerCookie(OAuth2):
         return param
 
 
-security = OAuth2PasswordBearerCookie(token_url="/login")
-
-
 def create_access_token(data: dict, expires_delta: timedelta | None):
+    settings = get_settings()
     to_encode = data.copy()
 
     if expires_delta:
@@ -59,12 +53,14 @@ def create_access_token(data: dict, expires_delta: timedelta | None):
         expire = datetime.utcnow() + timedelta(minutes=15)
 
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(security)):
+async def get_current_user(token: str = Depends(OAuth2PasswordBearerCookie(token_url="/login"))):
+    settings = get_settings()
     credentials_exceptions = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -72,7 +68,8 @@ async def get_current_user(token: str = Depends(security)):
     )
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY,
+                             algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exceptions
@@ -91,5 +88,7 @@ async def get_current_user(token: str = Depends(security)):
 
 
 async def decode_data(data):
-    decoded_data = jwt.decode(data, SECRET_KEY, algorithms=[ALGORITHM])
+    settings = get_settings()
+    decoded_data = jwt.decode(data, settings.SECRET_KEY,
+                              algorithms=[settings.ALGORITHM])
     return decoded_data
